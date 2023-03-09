@@ -60,15 +60,13 @@ void setup() {
     Serial.println("Starting LoRa failed!");
     while (1)
       ;
+  }else {
+    Serial.println("LORA ACTIVE");
   }
-
-  LoRa.beginPacket();
-  LoRa.print("LV-IGN");
-  LoRa.endPacket();
 }
 
 String IRS() {
-  String s = "-PIT-";
+  String s = "_PIT";
   compass.getHeading(&mx, &my, &mz);
   float hdg = atan2(my, mx);
 
@@ -79,9 +77,9 @@ String IRS() {
   hdg = hdg * 180 / M_PI;
 
   s.concat(mpu.getAngleX());
-  s.concat("-ROL-");
+  s.concat("_ROL");
   s.concat(mpu.getAngleY());
-  s.concat("-HDG-");
+  s.concat("_HDG");
   s.concat(hdg);
   return s;
 }
@@ -91,10 +89,9 @@ String BMP() {
   if (status != 0) {
     delay(status);
     status = bmp.getTemperature(T);
-    String s = "-TAT-";
+    String s = "_TAT";
     s.concat(T);
-    s.concat("-PRS-");
-
+    s.concat("_PRS");
     status = bmp.startPressure(3);
     if (status != 0) {
       delay(status);
@@ -107,7 +104,7 @@ String BMP() {
         status = bmp.getPressure(P, T);
         if (status != 0) {
           A = bmp.altitude(P, Po);
-          s.concat("-ALT-");
+          s.concat("_ALT");
           s.concat(A);
           return s;
         }
@@ -121,7 +118,7 @@ double TARGET_LAT = 41.8902102, TARGET_LON = 12.4922309; //COLISEO ROMA
 
 
 String LX() {
-  String s = "-LAT-";
+  String s = "_LAT";
   double lat = gps.location.lat();
   double lon = gps.location.lng();
   String lats = String(lat, 6);
@@ -135,11 +132,11 @@ String LX() {
     TARGET_LON);
 
   s.concat(lats);
-  s.concat("-LON-");
+  s.concat("_LON");
   s.concat(longs);
-  s.concat("-SPD-");
+  s.concat("_SPD");
   s.concat(gps.speed.kmph());
-  s.concat("-CRS-");
+  s.concat("_CRS");
   s.concat(crs);
   return s;
   
@@ -147,9 +144,17 @@ String LX() {
 
 void loop() {
   mpu.update();
-  Serial.print(IRS() + BMP());
-  Serial.println(LX());
-  smartDelay(0);
+  String msg = "LVSAT";
+  msg.concat(IRS());
+  msg.concat(BMP());
+  msg.concat(LX());
+
+  LoRa.beginPacket();
+  LoRa.print(msg);
+  LoRa.print("\r\n");
+  LoRa.endPacket();
+  
+  smartDelay(100);
 }
 
 static void smartDelay(unsigned long ms)
