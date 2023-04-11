@@ -29,6 +29,8 @@ int16_t mx, my, mz;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(25, OUTPUT);
+  digitalWrite(25, HIGH);
   ss.begin(GPSBaud);
   Wire.begin();
   compass.initialize();
@@ -57,11 +59,8 @@ void setup() {
   
   LoRa.setPins(cs, rst, dio0);
   if (!LoRa.begin(866E6)) {
-    Serial.println("Starting LoRa failed!");
     while (1)
       ;
-  }else {
-    Serial.println("LORA ACTIVE");
   }
 }
 
@@ -75,7 +74,7 @@ String IRS() {
   }
 
   hdg = hdg * 180 / M_PI;
-
+  mpu.update();
   s.concat(mpu.getAngleX());
   s.concat("_ROL");
   s.concat(mpu.getAngleY());
@@ -118,7 +117,7 @@ double TARGET_LAT = 41.8902102, TARGET_LON = 12.4922309; //COLISEO ROMA
 
 
 String LX() {
-  String s = "_LAT";
+  String s = "_SPD";
   double lat = gps.location.lat();
   double lon = gps.location.lng();
   String lats = String(lat, 6);
@@ -131,10 +130,6 @@ String LX() {
     TARGET_LAT,
     TARGET_LON);
 
-  s.concat(lats);
-  s.concat("_LON");
-  s.concat(longs);
-  s.concat("_SPD");
   s.concat(gps.speed.kmph());
   s.concat("_CRS");
   s.concat(crs);
@@ -143,7 +138,6 @@ String LX() {
 }
 
 void loop() {
-  mpu.update();
   String msg = "LVSAT";
   msg.concat(IRS());
   msg.concat(BMP());
@@ -153,8 +147,9 @@ void loop() {
   LoRa.print(msg);
   LoRa.print("\r\n");
   LoRa.endPacket();
+  Serial.println(msg);
   
-  smartDelay(100);
+  smartDelay(75);
 }
 
 static void smartDelay(unsigned long ms)
