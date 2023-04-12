@@ -58,7 +58,7 @@ void setup() {
   }
   
   LoRa.setPins(cs, rst, dio0);
-  if (!LoRa.begin(866E6)) {
+  if (!LoRa.begin(868050E3)) {
     while (1)
       ;
   }
